@@ -1,0 +1,68 @@
+---
+title: "TPM"
+author: '''Nethalie Betti Pillippuge'''
+date: "2025-02-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#Source of Files
+https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR9021305&display=download #SRR9021305
+
+https://www.ebi.ac.uk/ena/browser/view/SRR11908682
+bwt
+https://www.ebi.ac.uk/ena/browser/view/SRR16519371 #SRR16519371_1 SRR16519371_2
+
+#Assessing the quality using FastQC
+```{bash}
+module load fastqc/0.12.1-gcc-13.2.0
+
+fastqc SRR9021305.fastq
+
+fastqc SRR16519371_1.fastq
+fastqc SRR16519371_2.fastq
+
+```
+
+#Trimming sequences using fastp
+```{bash}
+
+fastp --interleaved_in -i /scratch/users/k24092786/msc_project/tpm/bwt_index/SRR9021305.fastq --out1 /scratch/users/k24092786/msc_project/tpm/bwt_index/SRR9021305_trim1.fastq --out2 /scratch/users/k24092786/msc_project/tpm/bwt_index/SRR9021305_trim2.fastq 
+
+```
+
+
+#Indexing and Aligning using Bowtie2
+
+```{bash}
+#Creating the index from the reference genome fastq file
+bowtie2-build -f /scratch/users/k24092786/msc_project/GCF_001761485.1_ASM176148v1_genomic.fasta /scratch/users/k24092786/msc_project/bwt_index 
+
+bowtie2-build GCA_001708105.1_ASM170810v1_genomic.fna /scratch/users/k24092786/msc_project/tpm/kp_index/index_kp
+
+#Aligning the sequences
+```
+
+
+```{bash}
+bowtie2 -x /scratch/users/k24092786/msc_project/metadata/YL/bowtie/index/index_bwt -1 SRR11908682_1.fastq -2 SRR11908682_2.fastq -S aligne
+d_yl.sam
+
+bowtie2 -x index_kp -1 SRR16519371_1.fastq -2 SRR16519371_2.fastq -S kp.sam
+
+
+
+```
+#Generating tpm values using stringtie
+```{bash}
+stringtie -o /scratch/users/k24092786/msc_project/outputs/YL/tpm_yl.gtf  -G Yarrowia_lipolytica.GCA_000002525.1.60.gff3 /scratch/users/k24092786/msc_project/outputs/YL/bowtie2/yl_output.sorted.bam
+```
+
+#samtools 
+```{bash}
+samtools view -b -S -o kp.bam kp.sam
+--
+```
+

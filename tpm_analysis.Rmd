@@ -1,0 +1,101 @@
+---
+title: "tpm_analysis"
+author: '''Nethalie Betti Pillippuge'''
+date: "2025-03-21"
+output: html_document
+---
+
+```{r}
+#BiocManagerA::install("rtracklayer")
+library(rtracklayer)
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+##Importing the gtf files and transforming them into data frames
+
+#Yarrowia lipolytica
+yl_gtf = as.data.frame(import)
+
+
+#Komagataella pastoris
+kp_gtf = as.data.frame(import("/Users/tneth/OneDrive/Documents/MSc_AppBio/MSc_project/outputs/gtf/SRR16519371.gtf"))
+kp_gtf$species_name = "Komagataella_pastoris"
+kp_gtf$exp_cond = "E : trm1 deletion" 
+
+  
+#Schizosaccharomyces pombe
+sp_gtf_1 = as.data.frame(import("/Users/tneth/OneDrive/Documents/MSc_AppBio/MSc_project/outputs/gtf/sp/SRR1919058.gtf"))
+sp_gtf_1$species_name = "Schizosaccharomyces_pombe"
+sp_gtf_1$exp_cond ="pomb_chx_1_f"
+
+
+sp_gtf_2 = as.data.frame(import("/Users/tneth/OneDrive/Documents/MSc_AppBio/MSc_project/outputs/gtf/sp/SRR1919060.gtf"))
+sp_gtf_2$species_name = "Schizosaccharomyces_pombe"
+sp_gtf_2$exp_cond = "pomb_chx_2_f"
+
+
+#Ogataea polymorpha
+op_gtf_1= as.data.frame(import("/Users/tneth/OneDrive/Documents/MSc_AppBio/MSc_project/outputs/gtf/op/SRR6292830.gtf"))
+op_gtf_1$species_name = "Ogataea_polymorpha"
+op_gtf_1$exp_cond = "MATa/alpha diploid in YPD replicate 1"
+
+
+op_gtf_2 = as.data.frame(import("/Users/tneth/OneDrive/Documents/MSc_AppBio/MSc_project/outputs/gtf/op/SRR6292831.gtf"))
+op_gtf_2$species_name = "Ogataea_polymorpha"
+op_gtf_2$exp_cond = "MATa/alpha diploid in YPD : replicate 2"
+
+
+op_gtf_3 = as.data.frame(import("/Users/tneth/OneDrive/Documents/MSc_AppBio/MSc_project/outputs/gtf/op/SRR6292832.gtf"))
+op_gtf_3$species_name = "Ogataea_polymorpha"
+op_gtf_3$exp_cond = "MATa/alpha diploid in YPD : replicate 3"
+
+
+gtf_combined = rbind(kp_gtf, op_gtf_1, op_gtf_2, op_gtf_3, sp_gtf_1, sp_gtf_2)
+
+```
+
+```{r}
+#Create separate data frames
+
+kp_col = gtf_combined[grep("Komagataella_pastoris", gtf_combined_filtered2$species_name), ]
+kp_filter = kp_col[, c("species_name", "gene_id", "TPM", "exp_cond")] 
+
+
+op_col = gtf_combined[grep("Ogataea_polymorpha", gtf_combined_filtered2$species_name), ]
+op_filter = op_col[, c("species_name", "gene_id", "TPM", "exp_cond")]
+
+
+sp_col = gtf_combined[grep("Schizosaccharomyces_pombe", gtf_combined_filtered2$species_name), ]
+sp_filter= sp_col[, c("species_name", "gene_id", "TPM", "exp_cond")]
+
+
+```
+##Calculating CV
+
+#Create a dataframe with gene_id, TPM for all conditions and then mean and cv as columns 
+```{r}
+
+#Remove rows with unique gene_ids and NA's
+sp_dup <- sp_filter %>% group_by(gene_id) %>% mutate(n=n()) %>% filter(n>1) %>% select(-n)
+
+sp_clean = na.omit(sp_dup)
+
+sp_sep <- sp_clean %>% pivot_wider(names_from = 'exp_cond', values_from = 'TPM')
+
+
+#Calculate mean
+sp_clean$TPM = as.numeric(unlist(sp_clean$TPM))
+
+
+sp_sep <- sp_clean %>% pivot_wider(names_from = 'exp_cond', values_from = 'TPM')
+
+sp_sep >%>
+  filter(symbol == 'pomb_chx_2_f') >%>
+  pull()
+
+
+sp_sep$mean = rowMeans(sp_sep[, c("pomb_chx_1_f")], na.rm = TRUE) 
+
+view(sp_sep[35,3])
+```
+
