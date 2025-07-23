@@ -1,0 +1,455 @@
+---
+title: "Normality_distribution"
+author: '''Nethalie Betti Pillippuge'''
+date: "2025-04-09"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(ggridges)
+
+```
+
+#Importing the files
+
+```{r}
+file_path = '/Users/tneth/OneDrive/Documents/MSc_AppBio/MSc_project/outputs/tsv/'
+
+# List all tsv files
+list_tsv <- list.files(path = file_path, pattern = "\\.tsv$", full.names = TRUE)
+
+# Created an empty list to store data
+combined_tsv <- list()
+filename_list <- list()
+```
+
+```{r}
+#Using a loop to process the tsv files
+
+for (file in list_tsv) {
+
+  # Read the file
+tsv_file <- read.csv(file, header = TRUE, , sep = "\t")
+  
+  #Add the file name to the file
+  tsv_file$species_name <- basename(file)
+  
+  # Add the file to the list
+  tsv_list = combined_tsv[[length(combined_tsv) + 1]] <- tsv_file
+
+}
+
+# Combine the list of data frames into one big data frame
+tsv_df <- do.call(rbind, combined_tsv)
+
+# View the result
+View(tsv_df)
+
+```
+
+##Plots showing the TPM distibution for species
+
+```{r}
+#Data frame of the raw tpm values
+
+tpm_df = tsv_df[, c("geneId", "TPM", "species_name")]
+
+tpm_df$species_name <- sub("_tpm_1_rsd_1\\.tsv$", "", tpm_df$species_name)
+tpm_df$species_name <- sub("_tpm_1_rsd_2\\.tsv$", "", tpm_df$species_name)
+
+tpm_df$species_name <- sub("_tpm_5_rsd_1\\.tsv$", "", tpm_df$species_name)
+tpm_df$species_name <- sub("_tpm_5_rsd_2\\.tsv$", "", tpm_df$species_name)
+
+```
+
+```{r}
+#Median TPM
+species_median <- tpm_df %>%
+    group_by(species_name) %>%
+    summarize(median_tpm_species = median(TPM, na.rm = TRUE))
+species_median <- species_median[-73, ]
+
+View(species_median)
+
+
+
+  
+ggplot(data = species_median, mapping = aes(x = median_tpm_species)) +
+  geom_histogram(binwidth = 20, boundary = 0, fill="darkolivegreen3", color="black") + 
+                ggtitle("Histogram showing median unnormalised TPM values per species") +
+                scale_x_continuous(breaks = seq(0, max(species_median$median_tpm_species, na.rm = TRUE), by = 50)) +
+                theme(
+                  axis.title = element_text(size = 20),
+                  axis.text = element_text(size = 20),
+                  plot.title = element_text(size = 25, hjust = 0.5)
+                )
+
+
+
+ggplot(data = species_median_tpm_df, mapping = aes(x = species_name, y = median_tpm)) +
+    geom_point() +
+      labs(
+      ggtitle = "Distribution of median TPM per species",
+      x = "Species",
+      y = "Median TPM"
+     ) +
+    theme(
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+
+        axis.title = element_text(size = 16),
+        axis.text = element_text(size = 14),
+        plot.title = element_text(size = 28, hjust = 0.5)
+     )
+
+         theme(
+                axis.title = element_text(size = 20),
+                axis.text = element_text(size = 20),
+                plot.title = element_text(size = 25, hjust = 0.5),
+                scale_x_continuous(limits = c(0, 8), breaks = seq(0, 8, 1)))
+```
+
+```{r}
+#Mean TPM
+species_mean <- tpm_df %>%
+    group_by(species_name) %>%
+    summarize(mean_tpm = mean(TPM, na.rm = TRUE))
+
+view(select(species_mean, species_name))
+write.csv(species_mean, "/Users/tneth/OneDrive/Documents/MSc_AppBio/MSc_project/outputs/species_mean.csv")
+
+
+ggplot(data = species_mean_tpm_df, mapping = aes(x = species_name, y = mean_tpm)) +
+    geom_point() +
+    labs(
+      title = "Distribution of mean TPM per species",
+      x = "Species",
+      y = "Mean TPM"
+     ) +
+    theme(
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+     )
+
+
+
+ggplot(data = species_mean, mapping = aes(x = mean_tpm)) +
+  geom_histogram(bins = 50, boundary = 0, fill="darkolivegreen3", color="black") + 
+                ggtitle("Histogram showing frequency of experiment numbers") +
+                scale_x_continuous(limits = c(0, ), breaks = seq(0, 800, 100)) 
+```
+
+##Plot showing the TPM distribution per genus.
+
+```{r}
+#Extracting the genus from species names
+tpm_df$genus=sapply(strsplit(tpm_df$species_name, " "), `[`, 1)
+
+genus_median_tpm <- tpm_df %>%
+  group_by(genus) %>%
+  summarize(median_tpm = median(TPM, na.rm = TRUE))  
+
+#Remove outlier
+genus_median_tpm <- genus_median_tpm[-(73),]
+view(genus_median_tpm)
+
+ggplot(data = genus_median_tpm, mapping= aes(x = genus, y = median_tpm)) +
+   geom_point() +
+      labs(
+      title = "Distribution of median TPM per genus",
+      x = "Genus",
+      y = "Median TPM"
+     ) +
+    theme(
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+     )
+
+view(tpm_df)
+
+```
+
+```{r}
+
+#Mean TPM
+genus_bc_mean <- tpm_df %>%
+    group_by(genus) %>%
+    summarize(mean_tpm = mean(TPM, na.rm = TRUE))
+
+#Remove outlier
+#genus_mean_tpm_df <- genus_bc_mean[-(73), ]
+view(genus_bc_mean)
+
+ggplot(data = genus_mean_tpm_df, mapping = aes(x = genus, y = mean_tpm)) +
+       geom_point() +
+      labs(
+      title = "Distribution of mean TPM per genus",
+      x = "Genus",
+      y = "Mean TPM"
+     ) +
+    theme(
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+     )
+
+
+```
+
+###Plot showing distribution of NORMALISED tpm values per species
+
+```{r}
+
+bc_df = tsv_df[, c("geneId", "boxcox_tpm", "species_name")]
+
+
+#remove the file extension from the species names
+
+bc_df$species_name <- sub("_tpm_1_rsd_2\\.tsv$", "", bc_df$species_name)
+
+bc_df$species_name <- sub("_tpm_1_rsd_1\\.tsv$", "", bc_df$species_name)
+
+
+```
+
+#Species Boxcox TPM distribution
+
+```{r}
+#Dataframe of the median bc tpm values for each species
+
+species_median_bc <- tpm_df_bc %>%
+    group_by(species_name) %>%
+    summarize(median_bc_tpm_species = median(boxcox_tpm, na.rm = TRUE))
+
+#Remove outlier
+#species_tpm_bc <- species_median_bc[-(73),]
+
+ggplot(data = species_median_tpm_bc, mapping= aes(x = species_name, y = median_tpm)) +
+         geom_point() +
+      labs(
+      title = "Distribution of median normalised TPM per species",
+      x = "Species",
+      y = "Median normalised TPM"
+     ) +
+    theme(
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+    )
+
+
+ggplot(data = species_median_bc, aes(x = median_bc_tpm_species)) +
+  geom_histogram(
+    bins = 50,
+    boundary = 0,
+    fill = "darkolivegreen3",
+    color = "black"
+  ) +
+  ggtitle("Median Box-Cox Normalised TPM Values per Species") +
+  theme(
+    axis.title = element_text(size = 20),
+    axis.text = element_text(size = 20),
+    plot.title = element_text(size = 25, hjust = 0.5)
+  )
+ + scale_x_continuous(limits = c(0, 8), breaks = seq(0, 8, 1))
+
+
+```
+
+
+
+```{r}
+## Histogram of RAW median TPM values ##
+#Dataframe of the median bc tpm values for each species
+
+species_median_bc <- tpm_df_bc %>%
+    group_by(species_name) %>%
+    summarize(median_bc_tpm_species = median(boxcox_tpm, na.rm = TRUE))
+
+#Remove outlier
+species_tpm_bc <- species_median_bc[-(73),]
+
+ggplot(data = species_median_tpm_bc, mapping= aes(x = species_name, y = median_tpm)) +
+         geom_point() +
+      labs(
+      title = "Distribution of median normalised TPM per species",
+      x = "Species",
+      y = "Median normalised TPM"
+     ) +
+    theme(
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+    )
+
+
+ggplot(data = species_tpm_bc, mapping = aes(x = median_bc_tpm_species)) +
+  geom_histogram(bins = 50, boundary = 0, fill = "darkolivegreen3", color = "black") + 
+  ggtitle("Histogram showing median box-cox normalised TPM values per species") +
+  scale_x_continuous(breaks = seq(0, 500, by = 50)) +  
+  theme(
+    axis.title = element_text(size = 20),
+    axis.text = element_text(size = 20),
+    plot.title = element_text(size = 25, hjust = 0.5)
+  )
+
+
+
+```
+
+```{r}
+
+species_mean_bc <- tpm_df_bc %>%
+    group_by(species_name) %>%
+    summarize(mean_bc_tpm_species = mean(boxcox_tpm, na.rm = TRUE))
+
+
+ggplot(data = species_mean_tpm_bc, mapping= aes(x = species_name, y = mean_bc_tpm)) +
+       geom_point() +
+      labs(
+      title = "Distribution of mean normalised TPM per species",
+      x = "Species",
+      y = "Mean normalised TPM"
+     ) +
+    theme(
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+     )
+
+
+
+ggplot(data = species_mean_bc, mapping = aes(x = mean_bc_tpm_species)) +
+  geom_histogram(bins = 50, boundary = 0, fill="darkolivegreen3", color="black") + 
+                ggtitle("Histogram showing frequency of mean box-cox normalised TPM values per species") + 
+                
+
+```
+
+#Genus Boxcox TPM distribution
+
+```{r}
+
+#Extracting the genus from species names
+tpm_df_bc$genus=sapply(strsplit(tpm_df$species_name, " "), `[`, 1)
+
+#Median tpm
+genus_median_tpm_bc <- tpm_df_bc %>%
+  group_by(genus) %>%
+  summarize(median_bc_tpm_genus = median(boxcox_tpm, na.rm = TRUE))  
+
+#Remove outlier
+genus_median_tpm_bc <- genus_median_tpm[-(73),]
+
+ggplot(data = genus_median_tpm_bc, mapping = aes(x = genus, y = median_tpm)) +
+        geom_point() +
+      labs(
+      title = "Distribution of median normalised TPM per genus",
+      x = "Genus",
+      y = "Median normalised TPM"
+     ) +
+    theme(
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+     )
+
+
+ggplot(data = genus_median_tpm_bc, mapping = aes(x = median_bc_tpm_genus)) +
+  geom_histogram(bins = 50, boundary = 0, fill="deepskyblue", color="black") + 
+                ggtitle("Histogram showing frequency of median box-cox normalised TPM values per genus") +
+                scale_x_continuous(limits = c(0, 7), breaks = seq(0, 7, 1))
+```
+
+```{r}
+  
+#Mean TPM
+genus_mean_tpm_bc <- tpm_df_bc %>%
+    group_by(genus) %>%
+    summarize(genus_mean_tpm_bc = mean(boxcox_tpm, na.rm = TRUE))  
+  
+#Remove outlier
+genus_mean_tpm_bc <- genus_mean_tpm_bc[-(73),]
+  
+ggplot(data = genus_mean_tpm_bc, mapping = aes(x = genus, y = mean_tpm)) +
+              geom_point() +
+      labs(
+      title = "Distribution of mean normalised TPM per genus",
+      x = "Genus",
+      y = "Mean normalised TPM"
+     ) +
+    theme(
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+     )
+
+
+
+ggplot(data = genus_mean_tpm_bc, mapping = aes(x = genus_mean_tpm_bc)) +
+  geom_histogram(bins = 50, boundary = 0, fill="deepskyblue", color="black") + 
+                ggtitle("Histogram showing frequency of mean box-cox normalised TPM values per genus") +
+                scale_x_continuous(limits = c(0, 7), breaks = seq(0, 7, 1))
+
+
+```
+
+## NORMALISED GENUS HISTOGRAMS INCLUDING GRIFOLA FRONDOSA
+
+#Mean TPM
+```{R}
+#Mean TPM
+genus_mean_df_bc <- tpm_df_bc %>%
+    group_by(genus) %>%
+    summarize(genus_mean_tpm_bc = mean(boxcox_tpm, na.rm = TRUE))  
+  
+ggplot(data = genus_mean_df_bc, mapping = aes(x = genus, y = genus_mean_tpm_bc)) +
+              geom_point() +
+      labs(
+      title = "Distribution of mean normalised TPM per genus (GF incl.)",
+      x = "Genus",
+      y = "Mean normalised TPM"
+     ) +
+    theme(
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+     ) +
+  scale_y_continuous(limits = c(0, 140), breaks=seq(0, 140, 5))
+
+
+
+ggplot(data = genus_mean_df_bc, mapping = aes(x = genus_mean_tpm_bc)) +
+  geom_histogram(bins = 50, boundary = 0, fill="darkseagreen1", color="black") + 
+                ggtitle("Histogram showing frequency of mean box-cox normalised TPM values per genus (GF incl.)") +
+                scale_x_continuous(limits = c(0, 140), breaks = seq(0, 140, 20)) 
+
+head(genus_mean_tpm_bc)
+
+#Median tpm
+genus_median_df_bc <- tpm_df_bc %>%
+  group_by(genus) %>%
+  summarize(median_bc_tpm_genus = median(boxcox_tpm, na.rm = TRUE))  
+
+ggplot(data = genus_median_df_bc, mapping = aes(x = genus, y = median_bc_tpm_genus)) +
+        geom_point() +
+      labs(
+      title = "Distribution of median normalised TPM per genus (GF incl.)",
+      x = "Genus",
+      y = "Median normalised TPM"
+     ) +
+    theme(
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+     ) +
+  scale_y_continuous(limits = c(0, 165), breaks=seq(0, 165, 5))
+
+
+ggplot(data = genus_median_tpm_bc, mapping = aes(x = median_bc_tpm_genus)) +
+  geom_histogram(bins = 50, boundary = 0, fill="darkseagreen1", color="black") + 
+                ggtitle("Histogram showing frequency of median box-cox normalised TPM values per genus") +
+                scale_x_continuous(limits = c(0, 7), breaks = seq(0, 7, 1))
+
+
+```

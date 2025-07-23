@@ -1,0 +1,203 @@
+---
+title: "Untitled"
+author: '''Nethalie Betti Pillippuge'''
+date: "2025-07-09"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(rtracklayer)
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(tools)
+library(ggplot2)
+```
+
+
+
+
+## SP ##
+```{r}
+gtf_files <- list.files("C:/Users/tneth/OneDrive/Documents/MSc_AppBio/MSc_project/outputs/gtf/sp/pipeline/", pattern = "\\.gtf$", full.names = TRUE)
+
+
+for (file in gtf_files) {
+  name <- file_path_sans_ext(basename(file))
+  gtf_df <- as.data.frame(import(file)) 
+  print(name)
+  
+  gtf_df$ref_gene_id <- gsub("^gene-SPOM_", "", gtf_df$ref_gene_id)
+  colnames(gtf_df)[colnames(gtf_df) == "ref_gene_id"] <- "geneId"
+  colnames(gtf_df)[colnames(gtf_df) == "TPM"] <- "Pipeline_TPM"
+  
+  
+  gtf_df <- gtf_df[, c("geneId", "Pipeline_TPM")]
+  gtf_df <- na.omit(gtf_df)
+  
+  assign(name, gtf_df)
+}
+
+```
+
+
+```{r}
+tsv_files <- list.files("C:/Users/tneth/OneDrive/Documents/MSc_AppBio/MSc_project/outputs/gtf/sp/FungiExp/", pattern = "\\.tsv$", full.names = TRUE)
+
+
+# Process each file
+for (file in tsv_files) {
+  
+  filename = basename(file)
+  srx <- sub("\\.gene\\.expr$", " ", filename) 
+  name <- file_path_sans_ext((file))
+  
+  gtf_df = assign(name, as.data.frame(read.csv(file, header=TRUE, sep="\t")))
+  colnames(gtf_df)[colnames(gtf_df) == "TPM"] <- "FungiExp_TPM"
+  print(colnames(gtf_df))
+  gtf_df <- gtf_df[, c("geneId", "FungiExp_TPM")]
+  View(gtf_df)
+  gtf_df <- na.omit(gtf_df)
+
+  assign(srx, gtf_df)
+}
+
+merged_56 <- merge(SRX959333.gene.expr.tsv, SRR1919056, by = "geneId")
+merged_56$log_Pipeline_TPM <- log10(as.numeric(as.character(merged_56$Pipeline_TPM)) + 1)
+merged_56$log_FungiExp_TPM <- log10(as.numeric(as.character(merged_56$FungiExp_TPM)) + 1)
+
+
+merged_58 <- merge(SRX959335.gene.expr.tsv, SRR1919058, by = "geneId")
+merged_58$log_Pipeline_TPM <- log10(as.numeric(as.character(merged_58$Pipeline_TPM)) + 1)
+merged_58$log_FungiExp_TPM <- log10(as.numeric(as.character(merged_58$FungiExp_TPM)) + 1)
+
+
+merged_60 <- merge(SRX959336.gene.expr.tsv, SRR1919060, by = "geneId")
+merged_60$log_Pipeline_TPM <- log10(as.numeric(as.character(merged_60$Pipeline_TPM)) + 1)
+merged_60$log_FungiExp_TPM <- log10(as.numeric(as.character(merged_60$FungiExp_TPM)) + 1)
+sp_cor_val <- cor(merged_sp$log_Pipeline_TPM, merged_sp$log_FungiExp_TPM, method = "pearson")
+
+
+merged_sp <- merge(merged_56, merged_58, by = "geneId")
+merged_sp <- merge(merged_sp, merged_60, by = "geneId")
+
+View(merged_sp)
+
+
+```
+
+
+
+
+## OP ##
+```{r}
+
+gtf_files <- list.files("C:/Users/tneth/OneDrive/Documents/MSc_AppBio/MSc_project/outputs/gtf/op/pipeline/", pattern = "\\.gtf$", full.names = TRUE)
+
+
+for (file in gtf_files) {
+  name <- file_path_sans_ext(basename(file))
+  gtf_df <- as.data.frame(import(file)) 
+  print(name)
+  
+  gtf_df$ref_gene_id <- gsub("^gene-", "", gtf_df$ref_gene_id)
+  colnames(gtf_df)[colnames(gtf_df) == "ref_gene_id"] <- "geneId"
+  colnames(gtf_df)[colnames(gtf_df) == "TPM"] <- "Pipeline_TPM"
+  
+  gtf_df <- gtf_df[, c("geneId", "Pipeline_TPM")]
+  gtf_df <- na.omit(gtf_df)
+  
+  assign(name, gtf_df)
+}
+View(SRR6292830)
+```
+
+
+```{r}
+tsv_files <- list.files("C:/Users/tneth/OneDrive/Documents/MSc_AppBio/MSc_project/outputs/gtf/op/FungiExp/", pattern = "\\.tsv$", full.names = TRUE)
+
+
+# Process each file
+for (file in tsv_files) {
+  filename = basename(file)
+  srx <- sub("\\.gene\\.expr$", " ", filename) 
+  name <- file_path_sans_ext((file))
+  gtf_df = assign(name, as.data.frame(read.csv(file, header=TRUE, sep="\t")))
+  colnames(gtf_df)[colnames(gtf_df) == "TPM"] <- "FungiExp_TPM"
+  print(colnames(gtf_df))
+  gtf_df <- gtf_df[, c("geneId", "FungiExp_TPM")]
+  gtf_df <- na.omit(gtf_df)
+
+  assign(srx, gtf_df)
+  print(srx)
+}
+
+merged_30 <- merge(SRX3393941.gene.expr.tsv, SRR6292830, by = "geneId")
+merged_30$log_Pipeline_TPM <- log10(as.numeric(as.character(merged_30$Pipeline_TPM)) + 1)
+merged_30$log_FungiExp_TPM <- log10(as.numeric(as.character(merged_30$FungiExp_TPM)) + 1)
+
+
+merged_31 <- merge(SRX3393942.gene.expr.tsv, SRR6292831, by = "geneId")
+merged_31$log_Pipeline_TPM <- log10(as.numeric(as.character(merged_31$Pipeline_TPM)) + 1)
+merged_31$log_FungiExp_TPM <- log10(as.numeric(as.character(merged_31$FungiExp_TPM)) + 1)
+
+
+
+merged_32 <- merge(SRX3393943.gene.expr.tsv, SRR6292832, by = "geneId")
+merged_32$log_Pipeline_TPM <- log10(as.numeric(as.character(merged_32$Pipeline_TPM)) + 1)
+merged_32$log_FungiExp_TPM <- log10(as.numeric(as.character(merged_32$FungiExp_TPM)) + 1)
+
+
+
+merged_op <- merge(merged_30, merged_31, by = "geneId")
+merged_op <- merge(merged_op, merged_32, by = "geneId")
+op_cor_val <- cor(merged_op$log_Pipeline_TPM, merged_op$log_FungiExp_TPM, method = "pearson")
+
+View(merged_op)
+
+```
+
+
+
+### Creating Plots ###
+
+```{r}
+library(ggplot2)
+
+
+ggplot(merged_op, aes(x = log_Pipeline_TPM, y = log_FungiExp_TPM)) +
+  geom_point(alpha = 1,   color="deepskyblue") +
+  geom_smooth(method = "lm", se = FALSE, color = "deepskyblue4") +
+  annotate("text", 
+         x = Inf, y = Inf, 
+         label = paste0("Pearson r = ", round(op_cor_val, 3)),
+         hjust = 1.7, vjust = 1.2, size = 5) +
+  labs(
+    x = "Pipeline TPM",
+    y = "FungiExp TPM",
+    title = "Correlation of log transformed TPM values for Ogataea polymorpha"
+    
+  ) 
+
+
+
+ggplot(merged_sp, aes(x = log_Pipeline_TPM, y = log_FungiExp_TPM)) +
+  geom_point(alpha = 1,   color="coral") +
+  geom_smooth(method = "lm", se = FALSE, color = "coral3") +
+  annotate("text", 
+         x = Inf, y = Inf, 
+         label = paste0("Pearson r = ", round(sp_cor_val, 3)),
+         hjust = 1.7, vjust = 1.2, size = 5) +
+  labs(
+    x = "Pipeline TPM",
+    y = "FungiExp TPM",
+    title = "Correlation of log transformed TPM values for Schizosaccharomyces pombe"
+    
+  ) 
+
+```
+
