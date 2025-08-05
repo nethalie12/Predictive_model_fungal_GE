@@ -16,11 +16,11 @@ Fungal TPM values sourced from FungiExp database for fungal gene expression and 
 https://academic.oup.com/bioinformatics/article/39/1/btad042/6992664
 
 
-Species DNA sequences sourced from Ensembl Fungi and the National Center for Biotechnology Information (NCBI) databases
+Species DNA sequences sourced from Ensembl Fungi and the National Center for Biotechnology Information (NCBI) databases.
 NCBI: https://www.ncbi.nlm.nih.gov/
 EnsemblFungi: http://fungi.ensembl.org/index.html
 
 ### Models
 
-Species aware DNA language models sourced from HuggingFace:
+Species aware DNA language models sourced from HuggingFace.
 https://huggingface.co/gagneurlab/SpeciesLM
